@@ -1,5 +1,5 @@
 ---
-title: "lab-2-key"
+title: "Lab 2 work through"
 format: 
   html:
     code-folding: show
@@ -58,6 +58,19 @@ mdl<-lm(f1, data=df_where_column_names_come_frome)
 
 ```{r}
 # Use this chunk and any extras to complete setting up the model
+
+f1 <- mass ~ bill_l + bill_d + flip_l + species + sex + island
+f2 <- mass ~ bill_l + bill_d + flip_l + species + sex
+f3 <- mass ~ bill_d + flip_l + species + sex
+
+mdl1 <- lm(f1, data = penguins_clean)
+mdl2 <- lm(f2, data = penguins_clean)
+mdl3 <- lm(f3, data = penguins_clean)
+
+summary(mdl1)
+summary(mdl2)
+summary(mdl3)
+
 ```
 
 
@@ -69,7 +82,8 @@ Use AIC to justify your model selection. What edits do you need to make in order
 ```{r}
 #| eval: false
 
-AIC(x,y,z)
+AIC(mdl1 ,mdl2 ,mdl3)
+
 ```
 
 
@@ -79,9 +93,20 @@ Now we're going to use 10-fold cross validation to help us select the models. Wr
 
 Pseudocode:
 
+how much training data to use (10 folds)
+split data into test and training
+random sampling
+what metric? 
+  Root Mean Squared Error
+  make a function for RMSE
 
+for loop:
+  apply the model to each training set
+  make prediction on the test set with fitted training model
+close loop
 
-
+summarize our RMSE (which model on average was best)
+Final model built on whole dataset
 
 
 
@@ -96,21 +121,33 @@ We'll use root mean square error to start as it is the most widely used.
 What is the difference between these two functions? Create two example vectors `x` and `y` to test each. Make sure to run the functions before trying them out. Which do you prefer using?
 
 ```{r}
-calc_rmse<-function(x,y){
+
+x <- c(10, 8, 4, 7)
+y <- c(22, 3, 4, 5)
+
+calc_rmse <- function(x,y){
   rmse <- (x-y)^2 |> 
     mean() |> 
     sqrt()
   return(rmse)
 }
 
-calc_rmse_2<-function(x,y){
+calc_rmse_2 <- function(x,y){
   rmse<- sqrt(mean((x-y)^2))
   
   return(rmse)
 }
+
+calc_rmse(x, y)
+calc_rmse_2(x, y)
+
+x <- rnorm(10000)
+y <- rnorm(10000)
+
+calc_rmse(x, y)
+calc_rmse_2(x, y)
+
 ```
-
-
 
 
 
@@ -133,8 +170,8 @@ sample(ex,size=1)
 sample(ex,size=10)
 sample(ex,size=10,replace=TRUE)
 
-#Describe in words the replace argument.
-
+# Describe in words the replace argument.
+# Sample from the sequence of the 1 through 5, but it puts the sampled number back in
 
 ```
 
@@ -142,6 +179,9 @@ Why is everybody getting different answers in the example sample? Is this a prob
 
 ```{r}
 #seed
+set.seed(42)
+
+sample(ex, size = 10, replace = TRUE)
 
 
 ```
@@ -154,7 +194,8 @@ folds<-10
 
 fold_vec<-rep(1:folds,length.out=nrow(penguins_clean))
 
-penguins_fold<-penguins_clean |> #what goes here?
+penguins_fold<-penguins_clean |> 
+  mutate(group = sample(fold_vec, size = n(), replace = FALSE))
   
 
 #check to make sure the fold groups are balanced
@@ -166,14 +207,23 @@ Create dataframes called `test_df` and `train_df` that split the penguins data i
 
 ```{r}
 # datasets here
+
+test_df <- penguins_fold |>
+  filter(group == 1)
+  
+
+train_df <- penguins_fold |>
+  filter(group != 1)
+  
 ```
 
 
 Now fit each model to the training set using the `lm()`. Name each model `training_lmX` where X is the number of the formula.
 
 ```{r}
-
-
+training_lm1 <- lm(f1, data = train_df)
+training_lm2 <- lm(f2, data = train_df)
+training_lm3 <- lm(f3, data = train_df)
 
 ```
 
@@ -185,16 +235,19 @@ Now fit each model to the training set using the `lm()`. Name each model `traini
 
 ```{r}
 predict_test<-test_df |> 
-  mutate(model1 = predict(xxx,test_df),
-         model2 = predict(xxx,test_df),
-         model3 = predict(xxx,test_df))
+  mutate(model1 = predict(training_lm1,test_df),
+         model2 = predict(training_lm2,test_df),
+         model3 = predict(training_lm3,test_df))
 ```
 
 Calculate the RMSE of the first fold test predictions. Hint: Use summarize to condense the `predict_test` dataframe.
 
 ```{r}
-rmse_predict_test<-predict_test |> 
-  summarize(????)
+rmse_predict_test <-predict_test |> 
+  summarize(rmse_mdl1 = calc_rmse(mass, model1), 
+            rmse_mdl2 = calc_rmse(mass, model2), 
+            rmse_mdl3 = calc_rmse(mass, model3))
+
 ```
 
 What are the results just looking at the first fold?
