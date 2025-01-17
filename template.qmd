@@ -161,6 +161,7 @@ We need to randomly assign every data point to a fold. We're going to want 10 fo
 `sample()` takes a random draw from a vector we pass into it. For example, we can tell sample to extract a random value from a vector of 1 through 5
 
 ```{r}
+#| eval: false
 ex<-seq(1,5)
 sample(ex,size=1)
 
@@ -181,7 +182,6 @@ Why is everybody getting different answers in the example sample? Is this a prob
 #seed
 set.seed(42)
 
-sample(ex, size = 10, replace = TRUE)
 
 
 ```
